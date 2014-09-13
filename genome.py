@@ -86,9 +86,12 @@ class Genome(object):
         return Phenotype(**phenotype_values)
 
     def make_gamete(self):
-        return {trait: random.choice(genes).reproduce()
+        my_gamete = {trait: random.choice(genes).reproduce()
                 for trait, genes in self.chromosome.iteritems()}
+        if random.random() < options.new_gene_chance:
+            my_gamete[random.choice(my_gamete.keys())] = Gene()
 
+        return my_gamete
     @staticmethod
     def combine(genea, geneb):
         """

@@ -68,7 +68,7 @@ class SimHerbivore(SimCreature):
         self.age = 0
 
     def step(self):
-        self.energy -= 2
+        self.energy -= 3
         self.age = self.age + 1
         if self.energy <= 0 or self.age > 300:
             kill(self.location)
@@ -148,10 +148,12 @@ class SimPlant(SimCreature):
             if neighbor_space and space_empty(neighbor_space):
                 self.energy = self.energy - 20
 
+                 ##try to breed sexually - look for a mate in a neighboring loc
                 mate_space = choose_neighbor(self.location)
                 if space_empty(mate_space):
                     g.creatures[neighbor_space] = bud(
                         self, loc=neighbor_space)
+
                 elif type(g.creatures[mate_space]) == self.__class__:
                     g.creatures[neighbor_space] = breed(
                         self, g.creatures[mate_space], loc=neighbor_space)

@@ -34,6 +34,8 @@ class GenomeTester(unittest.TestCase):
         # I do my own recombination in this test to use the same hash ordering
         choices = [0, 1, 1, 0]
         fake_random.choice.side_effect = lambda x: x[choices.pop()]
+        fake_random.random.return_value = options.new_gene_chance * 1.1 # don't get new_gene
+
         test_genome = make_genome()
         expected_gamete = {trait: fake_random.choice(genes)
                            for trait, genes in test_genome.chromosome.iteritems()}
@@ -42,6 +44,15 @@ class GenomeTester(unittest.TestCase):
 
         for trait, gene in test_gamete.iteritems():
             self.assert_in_mutant_range(gene, expected_gamete[trait])
+
+    @patch('genome.random.random')
+    def test_make_gamete_new_gene(self, fake_random):
+        fake_random.random.return_value = options.new_gene_chance * 0.9 # get new_gene
+
+        test_genome = make_genome()
+        ##TODO: How to test that one of the genes is new?
+        #currently this is just a smoke test
+        # the new gene could be within mutation distance of the old gene
 
     def test_make_phenotype(self):
         test_genome = make_genome()
