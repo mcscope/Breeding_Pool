@@ -21,8 +21,9 @@ class Gene(object):
         else:
             self.value = self.random_value()
 
-    def reproduce(self):
-        if random.random() < options.mutation_rate:
+    def reproduce(self, mutation_rate = None):
+        mutation_rate = mutation_rate or options.mutation_rate
+        if random.random() < mutation_rate:
 
             return self.__class__(self._mutate())
         return self
@@ -85,8 +86,8 @@ class Genome(object):
                             for trait, genes in self.chromosome.iteritems()}
         return Phenotype(**phenotype_values)
 
-    def make_gamete(self):
-        my_gamete = {trait: random.choice(genes).reproduce()
+    def make_gamete(self, mutation_rate=None):
+        my_gamete = {trait: random.choice(genes).reproduce(mutation_rate)
                 for trait, genes in self.chromosome.iteritems()}
         if random.random() < options.new_gene_chance:
             my_gamete[random.choice(my_gamete.keys())] = Gene()
@@ -110,12 +111,12 @@ class Genome(object):
 
         raise Exception("Should never reach this point - unknown gene type")
 
-    def mutate(self):
+    def mutate(self, mutation_rate=None):
         ploid_a = {}
         ploid_b = {}
         for trait, genes in self.chromosome.iteritems():
-            ploid_a[trait] = genes[0].reproduce()
-            ploid_b[trait] = genes[1].reproduce()
+            ploid_a[trait] = genes[0].reproduce(mutation_rate)
+            ploid_b[trait] = genes[1].reproduce(mutation_rate)
         return Genome(ploid_a, ploid_b)
 
 

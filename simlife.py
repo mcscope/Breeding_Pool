@@ -86,8 +86,7 @@ class SimHerbivore(SimCreature):
                     neighbor = None
 
             elif type(neighbor) == self.__class__:
-                might_have_space = True
-                while self.energy > 70 and might_have_space:
+                if self.energy > 70 :
                     child_space = find_or_make_empty_space(
                         self.location, victims=[SimPlant])
 
@@ -95,8 +94,6 @@ class SimHerbivore(SimCreature):
                         self.energy = self.energy - 20
                         g.creatures[child_space] = breed(
                             self, neighbor, loc=child_space)
-                    else:
-                        might_have_space = False
 
         if not neighbor:  # either was empty or got eaten.
             old_loc = self.location
@@ -140,7 +137,7 @@ class SimPlant(SimCreature):
         self.size = 0
 
     def step(self):
-        self.energy = min(self.energy + 1, 40)
+        self.energy = min(self.energy + 1, 50)
 
         if self.energy > 20:
 
