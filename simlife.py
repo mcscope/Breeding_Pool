@@ -1,13 +1,14 @@
-from Tkinter import *
+import pygame
 from options import options
 import random
 from life import Creature, bud, breed
-from utils import rgb_to_hex, Point, compare_color
-from simutils import cell_to_canvas, choose_neighbor, space_empty, find_or_make_empty_space, kill
+from utils import  Point, compare_color
+from simutils import cell_to_canvas, choose_neighbor, space_empty, find_or_make_empty_space, kill, rgb_to_pycolor
 from globals import g
 
 
 class SimCreature(Creature):
+
     """Base class for creatures for simple_sim"""
 
     def subclass_init(self, loc=None):
@@ -15,7 +16,6 @@ class SimCreature(Creature):
             self.location = loc
         else:
             self.location = self.random_point()
-        self.shape = None
 
     def random_point(self):
         x = int(random.random() * options.xcells)
@@ -33,26 +33,27 @@ class SimCreature(Creature):
         raise NotImplementedError
 
     def kill(self):
-        if self.shape:
-            g.canvas.delete(self.shape)
         del self
 
 
 class SimWall(SimCreature):
+
     """Doesn't move or change. Not alive - just a wall"""
     traits = []
 
+    def subclass_init(self, loc):
+        super(SimWall, self).subclass_init(loc)
+        self.color = pygame.Color("#663300")
     def step(self):
         pass
 
     def draw_subclass(self, cx, cy):
-        if not self.shape:
-            size = (options.cellsize)
-            self.shape = g.canvas.create_rectangle(
-                cx, cy, cx + size, cy + size, fill='brown', outline="black")
+        size = (options.cellsize)
+        g.surface.fill(self.color, (cx, cy, size, size,))
 
 
 class SimHerbivore(SimCreature):
+
     """
     Eats SimPlants, breeds if it can,
     buds if it gets to maximum energy.
@@ -64,7 +65,7 @@ class SimHerbivore(SimCreature):
     def subclass_init(self, loc=None):
         super(SimHerbivore, self).subclass_init(loc)
         self.energy = 40
-        self.color = rgb_to_hex(self.r, self.g, self.b)
+        self.color = rgb_to_pycolor(self.r, self.g, self.b)
         self.age = 0
 
     def step(self):
@@ -86,7 +87,7 @@ class SimHerbivore(SimCreature):
                     neighbor = None
 
             elif type(neighbor) == self.__class__:
-                if self.energy > 70 :
+                if self.energy > 70:
                     child_space = find_or_make_empty_space(
                         self.location, victims=[SimPlant])
 
@@ -108,20 +109,17 @@ class SimHerbivore(SimCreature):
                 g.creatures[child_space] = bud(self, loc=child_space)
                 self.energy == 100
 
-
-
     def draw_subclass(self, cx, cy):
-        if self.shape:
-            g.canvas.delete(self.shape)
         size = self.energy / 70.0 * (options.cellsize)
         offset = (options.cellsize - size) / 2
         cx = offset + cx
         cy = offset + cy
-        self.shape = g.canvas.create_oval(
-            cx, cy, cx + size, cy + size, fill=self.color)
+        pygame.draw.ellipse(g.surface, self.color,
+            (cx, cy, size, size), )
 
 
 class SimPlant(SimCreature):
+
     """
     slowly gains energy up to a maximum,
     each turn it will choose a nearby space and
@@ -133,8 +131,7 @@ class SimPlant(SimCreature):
     def subclass_init(self, loc=None):
         super(SimPlant, self).subclass_init(loc)
         self.energy = 0
-        self.color = rgb_to_hex(self.r, self.g, self.b)
-        self.size = 0
+        self.color = rgb_to_pycolor(self.r, self.g, self.b)
 
     def step(self):
         self.energy = min(self.energy + 1, 50)
@@ -145,7 +142,7 @@ class SimPlant(SimCreature):
             if neighbor_space and space_empty(neighbor_space):
                 self.energy = self.energy - 20
 
-                 ##try to breed sexually - look for a mate in a neighboring loc
+                 # try to breed sexually - look for a mate in a neighboring loc
                 mate_space = choose_neighbor(self.location)
                 if space_empty(mate_space):
                     g.creatures[neighbor_space] = bud(
@@ -157,12 +154,7 @@ class SimPlant(SimCreature):
 
     def draw_subclass(self, cx, cy):
         newsize = min(options.cellsize, self.energy // 5 + 1)
-        if newsize != self.size:  # if our size has changed.
-            self.size = newsize
-            if self.shape:
-                g.canvas.delete(self.shape)
-            offset = (options.cellsize - newsize) / 2
-            cx = offset + cx
-            cy = offset + cy
-            self.shape = g.canvas.create_rectangle(
-                cx, cy, cx + newsize, cy + newsize, fill=self.color, outline=self.color)
+        offset = (options.cellsize - newsize) / 2
+        cx = offset + cx
+        cy = offset + cy
+        g.surface.fill(self.color, (cx, cy,  newsize,  newsize))

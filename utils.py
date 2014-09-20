@@ -29,10 +29,6 @@ class dictobj(dict):
         return dictobj(self)
 
 
-def rgb_to_hex(r, g, b):
-    rgb = [r, g, b]
-    rgb = normalize_rgb(rgb)
-    return '#%02x%02x%02x' % tuple(rgb)
 
 def compare_color(rgb1, rgb2):
     rgb1 =  normalize_rgb(rgb1)

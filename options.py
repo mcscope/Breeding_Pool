@@ -26,7 +26,7 @@ parser.add_argument('--multi_chance', type=float, default = 0.05,
                    help='chance of a random gene being a multi')
 
 
-parser.add_argument('--xcells', type=int, default = 60,
+parser.add_argument('--xcells', type=int, default = 100,
                    help='width in cells')
 
 

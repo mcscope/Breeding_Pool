@@ -1,9 +1,9 @@
 from options import options
 import random
 from globals import g
-from utils import Point
+from utils import Point, normalize_rgb
 from math import floor
-
+import pygame
 
 
 def cell_to_canvas(apoint):
@@ -65,6 +65,11 @@ def find_or_make_empty_space(apoint, victims=[]):
     return None
 
 
+def rgb_to_pycolor(r, g, b):
+    rgb = [r, g, b]
+    rgb = normalize_rgb(rgb)
+    hex_value = '#%02x%02x%02x' % tuple(rgb)
+    return pygame.Color(hex_value)
 
 def space_empty(apoint):
     if apoint in g.creatures:

@@ -1,70 +1,84 @@
-from Tkinter import *
+import pygame
 from options import options
-from simutils import  canvas_to_cell, kill
+from simutils import canvas_to_cell, kill
 from simlife import SimPlant, SimHerbivore, SimWall
 from functools import partial
 from globals import g
 
 
+# do not edit! added by PythonBreakpoints
+from pudb import set_trace as _breakpoint
+
 
 class SimpleSim():
 
     def __init__(self):
-        self.root = Tk()
+        pygame.init()
         self.RUN = False
 
-        self.frame = Frame(bg="black")
-        self.frame.pack()
-        self.TEXT = "Simple life simulation"
-
-        g.canvas = Canvas(self.frame,
-                          highlightthickness=0,
-                          bg="#4E2F2F",
-                             width=(options.xcells + 1) * options.cellsize,
-                             height=(options.ycells + 1) * options.cellsize)
-        g.canvas.pack()
+        g.width = int((options.xcells + 1) * options.cellsize)
+        g.height = int((options.ycells + 1) * options.cellsize)
+        g.background_color = pygame.Color("#4E2F2F")
+        g.surface = pygame.display.set_mode((g.width, g.height))
 
         g.creatures = {}
         self.start()
 
-        self.root.mainloop()
 
     def start(self):
         self.time = 0
         self.RUN = True
 
         self.bindings = {
-            "<Button-1>": partial(self.clickSpawn, SimPlant),
-            "<Button-2>": partial(self.clickSpawn, SimHerbivore),
-            "<B3-Motion>": partial(self.clickSpawn, SimWall),
-            "w": partial(self.clickSpawn, SimWall),
+        "MouseButtonDown": self.clickSpawn
         }
-        for button, func in self.bindings.iteritems():
-            g.canvas.bind(button, func)
+        self.mouse_bindings = {
+            1: SimPlant,
+            3: SimHerbivore,
+            2: SimWall,
+        }
         self.run()
 
     def run(self):
-        if self.RUN is True:
+        while self.RUN is True:
+            ev = pygame.event.poll()    # Look for any event
+            if ev:
+                self.handle_event(ev)
+
             if self.time % 10 == 0:
                 print len(g.creatures)
             self.time += 1
             for creature in g.creatures.values():
                 creature.step()
             self.paint()
-            self.root.after(10, self.run)
+
+    def handle_event(self, event):
+        if event == pygame.QUIT:
+            self.end()
+        event_name = pygame.event.event_name(event.type)
+
+        if event_name in self.bindings:
+            self.bindings[event_name](event)
+
 
     def end(self):
         self.RUN = False
-        for binding in self.bindings.keys():
-            g.canvas.unbind(binding)
+        pygame.quit()
 
-    def clickSpawn(self,  spawn_class, event):
-        click_loc = canvas_to_cell(event.x, event.y)
+    def clickSpawn(self, event):
+        if event.button not in self.mouse_bindings:
+            return
+        spawn_class = self.mouse_bindings[event.button]
+        click_loc = canvas_to_cell(*(event.pos))
         kill(click_loc)
         g.creatures[click_loc] = spawn_class(loc=click_loc)
 
     def paint(self):
+        g.surface.fill(g.background_color)
         for creature in g.creatures.values():
             creature.draw()
 
-app = SimpleSim()
+        pygame.display.flip()
+
+
+SimpleSim()
