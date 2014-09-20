@@ -6,6 +6,7 @@ from math import floor
 import pygame
 
 
+
 def cell_to_canvas(apoint):
     return (apoint.x * options.cellsize, apoint.y * options.cellsize)
 
@@ -21,17 +22,31 @@ def valid_cell(apoint):
 
 def neighbors(apoint):
     possible_neighbors = []
-    if apoint.x > 0:
-        possible_neighbors.append(Point(apoint.x - 1, apoint.y))
+    left_edge = apoint.x <= 0
+    right_edge = apoint.x > options.xcells - 1
+    top_edge = apoint.y <= 0
+    bottom_edge = apoint.y > options.ycells - 1
 
-    if apoint.y > 0:
+    if not top_edge:
         possible_neighbors.append(Point(apoint.x, apoint.y - 1))
+        if not right_edge:
+            possible_neighbors.append(Point(apoint.x + 1, apoint.y - 1))
+        if not left_edge:
+            possible_neighbors.append(Point(apoint.x - 1, apoint.y - 1))
 
-    if apoint.x < options.xcells:
+    if not bottom_edge:
+        possible_neighbors.append(Point(apoint.x, apoint.y + 1))
+        if not right_edge:
+            possible_neighbors.append(Point(apoint.x + 1, apoint.y + 1))
+        if not left_edge:
+            possible_neighbors.append(Point(apoint.x - 1, apoint.y + 1))
+
+    if not right_edge:
         possible_neighbors.append(Point(apoint.x + 1, apoint.y))
 
-    if apoint.y < options.ycells:
-        possible_neighbors.append(Point(apoint.x, apoint.y + 1))
+    if not left_edge:
+        possible_neighbors.append(Point(apoint.x - 1, apoint.y))
+
     return possible_neighbors
 
 
@@ -48,6 +63,18 @@ def choose_empty_neighbor(apoint):
             return possible_neighbors[choice]
         del possible_neighbors[choice]
     return None
+
+def choose_specific_neighbor(apoint, neighbor_cls):
+    possible_neighbors = neighbors(apoint)
+    while possible_neighbors:
+        choice = random.choice(range(len(possible_neighbors)))
+        choice_spot = possible_neighbors[choice]
+        chosen_creature = g.creatures.get(choice_spot, None)
+        if type(chosen_creature) == neighbor_cls:
+            return choice_spot
+        del possible_neighbors[choice]
+    return None
+
 
 
 def find_or_make_empty_space(apoint, victims=[]):

@@ -36,7 +36,7 @@ def compare_color(rgb1, rgb2):
     total_difference = sum([abs(c1 - c2) for c1,c2 in zip(rgb1, rgb2)])
     max_distance = 256 * 3
     similarity = (max_distance - total_difference)/ (max_distance)
-    return similarity**3 + 0.02  # chance to eat it even if the colors don't match
+    return similarity**3
 
 def normalize_rgb(rgb):
     return [color % 256 for color in rgb]

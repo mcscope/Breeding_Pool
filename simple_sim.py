@@ -30,12 +30,17 @@ class SimpleSim():
         self.RUN = True
 
         self.bindings = {
-        "MouseButtonDown": self.clickSpawn
+        "MouseButtonDown": self.clickSpawn,
+        "KeyDown": self.handle_keys
         }
         self.mouse_bindings = {
             1: SimPlant,
             3: SimHerbivore,
             2: SimWall,
+        }
+        self.key_bindings = {
+            u'q': self.end,
+            u'r': self.reset,
         }
         self.run()
 
@@ -65,6 +70,10 @@ class SimpleSim():
         self.RUN = False
         pygame.quit()
 
+    def reset(self):
+        self.time=0
+        g.creatures = {}
+
     def clickSpawn(self, event):
         if event.button not in self.mouse_bindings:
             return
@@ -72,6 +81,10 @@ class SimpleSim():
         click_loc = canvas_to_cell(*(event.pos))
         kill(click_loc)
         g.creatures[click_loc] = spawn_class(loc=click_loc)
+
+    def handle_keys(self, event):
+        if event.unicode in self.key_bindings:
+            self.key_bindings[event.unicode]()
 
     def paint(self):
         g.surface.fill(g.background_color)
