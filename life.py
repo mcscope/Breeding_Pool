@@ -2,6 +2,7 @@ from genome import Genome
 from options import options
 
 class Creature(object):
+    mutation_rate=options.mutation_rate
     traits = ['strength', 'size', 'ferocity', 'anger', 'health', 'penis_length']
 
     def __init__(self, genome=None,  ploida=None, ploidb=None, **kw):
@@ -29,7 +30,7 @@ class Creature(object):
 def breed(creaturea, creatureb, **kw):
     if creaturea.__class__ != creatureb.__class__:
         raise Exception("Impossible to breed - mismatching classes")
-    return creaturea.__class__(ploida=creaturea.genome.make_gamete(), ploidb=creatureb.genome.make_gamete(), **kw)
+    return creaturea.__class__(ploida=creaturea.genome.make_gamete(creaturea.mutation_rate), ploidb=creatureb.genome.make_gamete(creaturea.mutation_rate), **kw)
 
 def bud(creature, **kw):
-    return creature.__class__(genome=creature.genome.mutate(), **kw)
+    return creature.__class__(genome=creature.genome.mutate(mutation_rate= creature.mutation_rate), **kw)

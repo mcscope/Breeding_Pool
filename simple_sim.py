@@ -18,15 +18,18 @@ class SimpleSim():
 
         g.width = int((options.xcells + 1) * options.cellsize)
         g.height = int((options.ycells + 1) * options.cellsize)
-        g.background_color = pygame.Color("#4E2F2F")
-        g.surface = pygame.display.set_mode((g.width, g.height))
+        g.background_color = pygame.Color("#444444")
+        flags = pygame.DOUBLEBUF | pygame.HWSURFACE
+        if options.fullscreen:
+            flags = flags | pygame.FULLSCREEN
+        g.surface = pygame.display.set_mode((g.width, g.height), flags)
+        g.surface.set_alpha(None)
 
-        g.creatures = {}
+        self.reset()
         self.start()
 
 
     def start(self):
-        self.time = 0
         self.RUN = True
 
         self.bindings = {
@@ -50,9 +53,9 @@ class SimpleSim():
             if ev:
                 self.handle_event(ev)
 
-            if self.time % 10 == 0:
+            g.time += 1
+            if g.time % 10 == 0:
                 print len(g.creatures)
-            self.time += 1
             for creature in g.creatures.values():
                 creature.step()
             self.paint()
@@ -71,8 +74,11 @@ class SimpleSim():
         pygame.quit()
 
     def reset(self):
-        self.time=0
+        g.time=0
         g.creatures = {}
+        g.changed_rects = []
+        pygame.display.update(g.surface.fill(g.background_color))
+
 
     def clickSpawn(self, event):
         if event.button not in self.mouse_bindings:
@@ -87,11 +93,11 @@ class SimpleSim():
             self.key_bindings[event.unicode]()
 
     def paint(self):
-        g.surface.fill(g.background_color)
+        #
         for creature in g.creatures.values():
             creature.draw()
-
-        pygame.display.flip()
+        pygame.display.update(g.changed_rects)
+        g.changed_rects = []
 
 
 SimpleSim()

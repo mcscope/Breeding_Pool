@@ -91,6 +91,9 @@ def find_or_make_empty_space(apoint, victims=[]):
 
     return None
 
+def rect_from_location(apoint):
+    cx, cy = cell_to_canvas(apoint)
+    return (cx, cy,  options.cellsize,  options.cellsize)
 
 def rgb_to_pycolor(r, g, b):
     rgb = [r, g, b]

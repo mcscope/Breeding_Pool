@@ -26,7 +26,7 @@ parser.add_argument('--multi_chance', type=float, default = 0.05,
                    help='chance of a random gene being a multi')
 
 
-parser.add_argument('--xcells', type=int, default = 100,
+parser.add_argument('--xcells', type=int, default = 80,
                    help='width in cells')
 
 
@@ -38,8 +38,13 @@ parser.add_argument('--cellsize', type=int, default = 10,
 
 
 
+parser.add_argument('--fullscreen', type=bool, default = False,
+                   help='display fullscreen')
+
+
+
 parser.add_argument('--show_genes', type=bool, default = False,
-                   help='inital max value for multis')
+                   help='str of a creature shows geneome, not ph')
 
 options = parser.parse_args()
 
