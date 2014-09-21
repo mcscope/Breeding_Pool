@@ -173,7 +173,7 @@ class SimPlant(VolitileCreature):
     Has a color which is genetically inherited
     """
     traits = ['r', 'g', 'b']
-    max_energy = 50
+    max_energy = 70
     breed_energy = 10
 
     def subclass_init(self, loc=None):
