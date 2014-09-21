@@ -96,11 +96,11 @@ class SimHerbivore(VolitileCreature):
     traits = ['r', 'g', 'b']
     start_energy = 45.0
     max_energy = 250.0
-    metabolism = 5.0
+    metabolism = 2.0
     min_breed_energy = 60.0
     breed_energy_loss = 40.0
-    min_bud_energy = 100.0
-    bud_energy_loss = 50.0
+    min_bud_energy = 200.0
+    bud_energy_loss = 100.0
     max_age = 350
     mutation_rate = 1.0
 
