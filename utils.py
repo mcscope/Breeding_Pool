@@ -1,6 +1,11 @@
 from collections import namedtuple
-Point = namedtuple("Point", ('x', 'y'))
+from numpy.linalg import norm
+from numpy import array
+from options import options
 
+
+
+Point = namedtuple("Point", ('x', 'y'))
 
 class dictobj(dict):
 
@@ -36,7 +41,22 @@ def compare_color(rgb1, rgb2):
     total_difference = sum([abs(c1 - c2) for c1,c2 in zip(rgb1, rgb2)])
     max_distance = 256 * 3
     similarity = (max_distance - total_difference)/ (max_distance)
-    return 0.5 * (similarity**4 + 0.04) # small constant chance to eat
+    return similarity
+
 
 def normalize_rgb(rgb):
     return [color % 256 for color in rgb]
+
+def normalize(in_array):
+    norm_scalar =  norm(in_array)
+    if norm_scalar == 0:
+        return in_array
+
+    return in_array / norm_scalar
+
+def normalize_to_window(in_array):
+
+    in_array = in_array % array([options.width, options.height])
+    in_array = array([max(in_array[0], 0),
+                    max(in_array[1], 0) ])
+    return in_array

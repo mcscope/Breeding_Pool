@@ -36,7 +36,11 @@ parser.add_argument('--ycells', type=int, default = 60,
 parser.add_argument('--cellsize', type=int, default = 10,
                    help='width and height of the cells in pixels')
 
+parser.add_argument('--width', type=float, default = 500.0,
+                   help='width (swarmsim)')
 
+parser.add_argument('--height', type=float, default = 500.0,
+                   help='height (swarmsim)')
 
 parser.add_argument('--fullscreen', type=bool, default = False,
                    help='display fullscreen')

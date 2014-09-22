@@ -1,13 +1,10 @@
 import pygame
 from options import options
-from simutils import canvas_to_cell, kill
-from simlife import SimPlant, SimHerbivore, SimWall
+from simple_sim.simutils import canvas_to_cell, kill
+from simple_sim.simlife import SimPlant, SimHerbivore, SimWall
 from functools import partial
 from globals import g
 
-
-# do not edit! added by PythonBreakpoints
-from pudb import set_trace as _breakpoint
 
 
 class SimpleSim():
@@ -99,5 +96,6 @@ class SimpleSim():
         pygame.display.update(g.changed_rects)
         g.changed_rects = []
 
-
-SimpleSim()
+if __name__ == "__main__" and __package__ is None:
+    __package__ = "simple_sim"
+    SimpleSim()

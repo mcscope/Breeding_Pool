@@ -3,12 +3,9 @@ from options import options
 import random
 from life import Creature, bud, breed
 from utils import Point, compare_color
-from simutils import cell_to_canvas, choose_neighbor, choose_specific_neighbor, choose_empty_neighbor, find_or_make_empty_space, kill, rgb_to_pycolor, rect_from_location
+from simutils import cell_to_canvas, choose_neighbor, choose_specific_neighbor, choose_empty_neighbor, find_or_make_empty_space, kill, rgb_to_pycolor, rect_from_location, chance_to_eat
 from globals import g
 
-
-# do not edit! added by PythonBreakpoints
-from pudb import set_trace as _breakpoint
 
 
 class SimCreature(Creature):
@@ -21,6 +18,9 @@ class SimCreature(Creature):
         else:
             self.location = self.random_point()
         self.rect = None
+        # self.r = 0 # TODO Del
+        # self.g = 255 # TODO Del
+        # self.b = 0 # TODO Del
 
     def random_point(self):
         x = int(random.random() * options.xcells)
@@ -109,6 +109,7 @@ class SimHerbivore(VolitileCreature):
         self.energy = self.start_energy
         self.color = rgb_to_pycolor(self.r, self.g, self.b)
         self.age = 0
+        self.size=0
 
     def step_subclass(self):
         self.energy -= self.metabolism
@@ -123,8 +124,10 @@ class SimHerbivore(VolitileCreature):
             if type(neighbor) == SimPlant:
                 color_similarity = compare_color([self.r, self.g, self.b],
                                                  [neighbor.r, neighbor.g, neighbor.b])
-                if random.random() < color_similarity:
-                    self.energy = self.energy + neighbor.energy
+                eat_chance = chance_to_eat([self.r, self.g, self.b],
+                                                 [neighbor.r, neighbor.g, neighbor.b])
+                if random.random() < eat_chance:
+                    self.energy = self.energy + neighbor.energy * color_similarity
                     self.energy = min(self.max_energy, self.energy)
                     kill(neighbor_space)
                     neighbor = None
@@ -150,18 +153,20 @@ class SimHerbivore(VolitileCreature):
                 self.energy == self.energy - self.bud_energy_loss
 
     def draw_subclass(self, cx, cy):
-        self.erase()
-        size = int((self.energy / self.max_energy) *
+        newsize = int((self.energy / self.max_energy) *
                    (options.cellsize / 2) + options.cellsize / 2)
-        offset = (options.cellsize - size) // 2
+
+        if self.size > newsize:
+            self.erase
+        self.size = newsize
+        offset = (options.cellsize - self.size) // 2
         cx = offset + cx
         cy = offset + cy
         ellipse = pygame.draw.ellipse(g.surface, self.color,
-                                     (cx, cy, size, size), )
+                                     (cx, cy, self.size, self.size), )
         return ellipse
 
-    def draw_over(self, rect):
-        return pygame.draw.ellipse(g.surface, g.background_color, rect)
+
 
 
 class SimPlant(VolitileCreature):
@@ -173,7 +178,7 @@ class SimPlant(VolitileCreature):
     Has a color which is genetically inherited
     """
     traits = ['r', 'g', 'b']
-    max_energy = 70
+    max_energy = 50
     breed_energy = 10
 
     def subclass_init(self, loc=None):
@@ -208,7 +213,7 @@ class SimPlant(VolitileCreature):
     def draw_subclass(self, cx, cy):
         newsize = min(
             options.cellsize, options.cellsize * self.energy / self.max_energy + 1)
-        if not self.rect or self.size != newsize or g.time % 5 == 0:
+        if not self.rect or self.size != newsize:
             self.size = newsize
             offset = (options.cellsize - newsize) / 2
             cx = offset + cx

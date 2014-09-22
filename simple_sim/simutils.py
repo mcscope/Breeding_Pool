@@ -4,7 +4,7 @@ from globals import g
 from utils import Point, normalize_rgb
 from math import floor
 import pygame
-
+from utils import compare_color
 
 
 def cell_to_canvas(apoint):
@@ -49,6 +49,9 @@ def neighbors(apoint):
 
     return possible_neighbors
 
+def chance_to_eat(rgb1, rgb2):
+    similarity = compare_color(rgb1, rgb2)
+    return 0.3 * (similarity**4 + 0.2) # small constant chance to eat
 
 def choose_neighbor(apoint):
     possible_neighbors = neighbors(apoint)
