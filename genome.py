@@ -1,6 +1,14 @@
 import random
 from options import options
 from utils import dictobj
+from collections import namedtuple
+import math
+
+# do not edit! added by PythonBreakpoints
+from pudb import set_trace as _breakpoint
+
+
+MutationRate = namedtuple("MutationRate", ['mutation_rate', "new_gene_chance", 'multi_chance'])
 
 
 class Gene(object):
@@ -10,9 +18,9 @@ class Gene(object):
     Once created, it's value never changes
     """
 
-    def __init__(self, value=None):
+    def __init__(self, mutation_rate, value=None):
         if self.__class__ == Gene:
-            if random.random() < options.multi_chance:
+            if random.random() < mutation_rate.multi_chance:
                 self.__class__ = Multiplier
             else:
                 self.__class__ = Constant
@@ -21,11 +29,11 @@ class Gene(object):
         else:
             self.value = self.random_value()
 
-    def reproduce(self, mutation_rate = None):
-        mutation_rate = mutation_rate or options.mutation_rate
-        if random.random() < mutation_rate:
+        self.mutation_rate = mutation_rate
 
-            return self.__class__(self._mutate())
+    def reproduce(self, mutation_rate = None):
+        if random.random() < mutation_rate.mutation_rate:
+            return self.__class__(mutation_rate, value=self._mutate())
         return self
 
     def random_value(self):
@@ -46,7 +54,7 @@ class Constant(Gene):
         return random.random() * options.constant_max_init
 
     def _mutate(self):
-        mutate_val = self.value + options.constant_mutation_depth * (2 * random.random() - 1)
+        mutate_val = self.value + options.constant_mutation_depth * (random.random() + random.random() - 1)
         return max(0, mutate_val)
 
 class Multiplier(Gene):
@@ -56,7 +64,7 @@ class Multiplier(Gene):
         return random.random() * options.multi_max_init
 
     def _mutate(self):
-        mutate_val = self.value + options.multi_mutation_depth * (2 * random.random() - 1)
+        mutate_val = self.value + options.multi_mutation_depth * (random.random() + random.random() - 1)
         return max(0, mutate_val)
 
 gene_types = [Constant, Multiplier]
@@ -75,22 +83,45 @@ class Genome(object):
 
         self.chromosome = {trait: (ploid_a[trait], ploid_b[trait])
                             for trait in ploid_a.keys()}
+
     @classmethod
-    def random(cls, traits):
-        ploid_a = {trait:Gene() for trait in traits}
-        ploid_b = {trait:Gene() for trait in traits}
+    def random(cls, traits, mutation_rate):
+        ploid_a = {trait:Gene(mutation_rate) for trait in traits}
+        ploid_b = {trait:Gene(mutation_rate) for trait in traits}
         return cls(ploid_a, ploid_b)
 
-    def make_phenotype(self):
-        phenotype_values = {trait: self.combine(*genes)
+    def map_genome_codings_to_phenotype(self, genome_codings, trait_ranges):
+        # formula is (min-max)sin(x ** 1/2) + (1 + min)
+        # forces a smooth transition between values in the range (so no mod cliff)
+        # it gets smoother as the numbers gets higher. evolutionary advantage?
+
+        phenotype_values = {}
+        for trait in genome_codings.keys():
+            min_val, max_val =  trait_ranges[trait]
+            x =  genome_codings[trait]
+            range_from_min_to_max = (max_val - min_val )
+            # normalized_value = ((math.sin(x ** 1/2.0) + 1.0) * 1/2)
+            normalized_value = (x % 100.0) / 100.0
+            mapped_value = range_from_min_to_max * normalized_value + min_val
+
+            phenotype_values[trait] = mapped_value
+
+
+        return phenotype_values
+
+    def make_phenotype(self, trait_ranges):
+        genome_codings = {trait: self.combine(*genes)
                             for trait, genes in self.chromosome.iteritems()}
+        phenotype_values = self.map_genome_codings_to_phenotype(genome_codings, trait_ranges)
         return Phenotype(**phenotype_values)
 
+
     def make_gamete(self, mutation_rate=None):
+
         my_gamete = {trait: random.choice(genes).reproduce(mutation_rate)
                 for trait, genes in self.chromosome.iteritems()}
-        if random.random() < options.new_gene_chance:
-            my_gamete[random.choice(my_gamete.keys())] = Gene()
+        if random.random() < mutation_rate.new_gene_chance:
+            my_gamete[random.choice(my_gamete.keys())] = Gene(mutation_rate)
 
         return my_gamete
     @staticmethod

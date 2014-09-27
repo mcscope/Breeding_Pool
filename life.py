@@ -1,24 +1,29 @@
-from genome import Genome
+from genome import Genome, MutationRate
 from options import options
 
 class Creature(object):
-    mutation_rate=options.mutation_rate
-    traits = ['strength', 'size', 'ferocity', 'anger', 'health', 'penis_length']
-
+    mutation_rate = MutationRate(mutation_rate=0.0, new_gene_chance=0.0, multi_chance=0.0)
+    trait_ranges={"example_trait":(-1,1)}
     def __init__(self, genome=None,  ploida=None, ploidb=None, **kw):
         if genome:
             self.genome = genome
         elif ploida and ploidb:
             self.genome = Genome(ploida, ploidb)
         else:
-            self.genome = Genome.random(self.traits)
-        self.phenotype = self.genome.make_phenotype()
+            self.genome = Genome.random(self.traits, self.mutation_rate)
+        self.phenotype = self.genome.make_phenotype(self.trait_ranges)
         self.__dict__.update(self.phenotype)
 
         self.subclass_init( **kw)
 
     def subclass_init(self, **kw):
         pass
+    @property
+    def traits(self):
+        if not getattr(self, '_traits', None):
+            self._traits = self.trait_ranges.keys()
+
+        return self._traits
 
     def __str__(self):
         if options.show_genes:

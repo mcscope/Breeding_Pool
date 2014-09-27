@@ -1,10 +1,11 @@
 from options import options
 import random
 from globals import g
-from utils import Point, normalize_rgb
+from utils import Point
 from math import floor
 import pygame
 from utils import compare_color
+
 
 
 def cell_to_canvas(apoint):
@@ -49,9 +50,9 @@ def neighbors(apoint):
 
     return possible_neighbors
 
-def chance_to_eat(rgb1, rgb2):
-    similarity = compare_color(rgb1, rgb2)
-    return 0.3 * (similarity**4 + 0.2) # small constant chance to eat
+def chance_to_eat(color1, color2):
+    similarity = compare_color(color1, color2)
+    return 0.4 * (similarity**4 + 0.05) # small constant chance to eat
 
 def choose_neighbor(apoint):
     possible_neighbors = neighbors(apoint)
@@ -98,11 +99,10 @@ def rect_from_location(apoint):
     cx, cy = cell_to_canvas(apoint)
     return (cx, cy,  options.cellsize,  options.cellsize)
 
-def rgb_to_pycolor(r, g, b):
-    rgb = [r, g, b]
-    rgb = normalize_rgb(rgb)
-    hex_value = '#%02x%02x%02x' % tuple(rgb)
-    return pygame.Color(hex_value)
+def hsl_to_pycolor(h, s, l):
+    color = pygame.Color(0,0,0,0)
+    color.hsla = (h, s, l, 0)
+    return color
 
 def space_empty(apoint):
     if apoint in g.creatures:

@@ -6,7 +6,6 @@ from functools import partial
 from globals import g
 
 
-
 class SimpleSim():
 
     def __init__(self):
@@ -41,6 +40,7 @@ class SimpleSim():
         self.key_bindings = {
             u'q': self.end,
             u'r': self.reset,
+            u'w': self.plantWall,
         }
         self.run()
 
@@ -52,7 +52,7 @@ class SimpleSim():
 
             g.time += 1
             if g.time % 10 == 0:
-                print len(g.creatures)
+                print "%s: %s" % (g.time,len(g.creatures))
             for creature in g.creatures.values():
                 creature.step()
             self.paint()
@@ -76,14 +76,21 @@ class SimpleSim():
         g.changed_rects = []
         pygame.display.update(g.surface.fill(g.background_color))
 
+    def plantWall(self):
+        pos = pygame.mouse.get_pos()
+        self.placeAt(pos, SimWall)
+
+    def placeAt(self, position,spawn_class):
+        click_loc = canvas_to_cell(*(position))
+        kill(click_loc)
+        g.creatures[click_loc] = spawn_class(loc=click_loc)
+
 
     def clickSpawn(self, event):
         if event.button not in self.mouse_bindings:
             return
         spawn_class = self.mouse_bindings[event.button]
-        click_loc = canvas_to_cell(*(event.pos))
-        kill(click_loc)
-        g.creatures[click_loc] = spawn_class(loc=click_loc)
+        self.placeAt(event.pos, spawn_class)
 
     def handle_keys(self, event):
         if event.unicode in self.key_bindings:

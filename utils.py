@@ -35,17 +35,12 @@ class dictobj(dict):
 
 
 
-def compare_color(rgb1, rgb2):
-    rgb1 =  normalize_rgb(rgb1)
-    rgb2 =  normalize_rgb(rgb2)
-    total_difference = sum([abs(c1 - c2) for c1,c2 in zip(rgb1, rgb2)])
-    max_distance = 256 * 3
+def compare_color(hsl1, hsl2):
+    total_difference = sum([abs(c1 - c2) for c1,c2 in zip(hsl1, hsl2)])
+    max_distance = 460
     similarity = (max_distance - total_difference)/ (max_distance)
     return similarity
 
-
-def normalize_rgb(rgb):
-    return [color % 256 for color in rgb]
 
 def normalize(in_array):
     norm_scalar =  norm(in_array)

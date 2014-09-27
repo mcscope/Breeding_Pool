@@ -3,10 +3,9 @@ from options import options
 import random
 from life import Creature, bud, breed
 from utils import Point, compare_color
-from simutils import cell_to_canvas, choose_neighbor, choose_specific_neighbor, choose_empty_neighbor, find_or_make_empty_space, kill, rgb_to_pycolor, rect_from_location, chance_to_eat
+from genome import MutationRate
+from simutils import cell_to_canvas, choose_neighbor, choose_empty_neighbor, find_or_make_empty_space, kill, hsl_to_pycolor, rect_from_location, chance_to_eat
 from globals import g
-
-
 
 class SimCreature(Creature):
 
@@ -18,9 +17,6 @@ class SimCreature(Creature):
         else:
             self.location = self.random_point()
         self.rect = None
-        # self.r = 0 # TODO Del
-        # self.g = 255 # TODO Del
-        # self.b = 0 # TODO Del
 
     def random_point(self):
         x = int(random.random() * options.xcells)
@@ -63,6 +59,7 @@ class SimCreature(Creature):
 class SimWall(SimCreature):
 
     """Doesn't move or change. Not alive - just a wall"""
+    mutation_rate = MutationRate(mutation_rate=0.0, new_gene_chance=0.0, multi_chance=0.0)
     traits = []
 
     def subclass_init(self, loc):
@@ -74,9 +71,10 @@ class SimWall(SimCreature):
         pass
 
     def draw_subclass(self, cx, cy):
-        size = (options.cellsize)
-        rect = g.surface.fill(self.color, (cx, cy, size, size,))
-        return rect
+        if not self.rect:
+            size = (options.cellsize)
+            rect = g.surface.fill(self.color, (cx, cy, size, size,))
+            return rect
 
 
 class VolitileCreature(SimCreature):
@@ -93,7 +91,9 @@ class SimHerbivore(VolitileCreature):
     Ability to eat the plants is based on how similar the colors are
     Draw's a circle, size is determined by energy
     """
-    traits = ['r', 'g', 'b']
+    trait_ranges = {'h': (0, 360),
+                    's': (30, 80),
+                    'l': (40, 60)}
     start_energy = 45.0
     max_energy = 250.0
     metabolism = 2.0
@@ -102,12 +102,12 @@ class SimHerbivore(VolitileCreature):
     min_bud_energy = 200.0
     bud_energy_loss = 100.0
     max_age = 350
-    mutation_rate = 1.0
+    mutation_rate = MutationRate(mutation_rate=0.8, new_gene_chance=0.1, multi_chance=0.2)
 
     def subclass_init(self, loc=None):
         super(SimHerbivore, self).subclass_init(loc)
         self.energy = self.start_energy
-        self.color = rgb_to_pycolor(self.r, self.g, self.b)
+        self.color = hsl_to_pycolor(self.h, self.s, self.l)
         self.age = 0
         self.size=0
 
@@ -122,10 +122,10 @@ class SimHerbivore(VolitileCreature):
         neighbor = g.creatures.get(neighbor_space)
         if neighbor:
             if type(neighbor) == SimPlant:
-                color_similarity = compare_color([self.r, self.g, self.b],
-                                                 [neighbor.r, neighbor.g, neighbor.b])
-                eat_chance = chance_to_eat([self.r, self.g, self.b],
-                                                 [neighbor.r, neighbor.g, neighbor.b])
+                color_similarity = compare_color([self.h, self.s, self.l],
+                                                 [neighbor.h, neighbor.s, neighbor.l])
+                eat_chance = chance_to_eat([self.h, self.s, self.l],
+                                                 [neighbor.h, neighbor.s, neighbor.l])
                 if random.random() < eat_chance:
                     self.energy = self.energy + neighbor.energy * color_similarity
                     self.energy = min(self.max_energy, self.energy)
@@ -177,14 +177,17 @@ class SimPlant(VolitileCreature):
     bud/breed to it if possible
     Has a color which is genetically inherited
     """
-    traits = ['r', 'g', 'b']
+    trait_ranges = {'h': (0, 360),
+                    's': (30, 80),
+                    'l': (40, 60)}
     max_energy = 50
     breed_energy = 10
+    mutation_rate =  MutationRate(mutation_rate=0.3, new_gene_chance=0.00, multi_chance=0.0)
 
     def subclass_init(self, loc=None):
         super(SimPlant, self).subclass_init(loc)
         self.energy = 0
-        self.color = rgb_to_pycolor(self.r, self.g, self.b)
+        self.color = hsl_to_pycolor(self.h, self.s, self.l)
         self.size = -1
         self.surrounded = False
 
@@ -192,31 +195,44 @@ class SimPlant(VolitileCreature):
         self.energy = min(self.energy + 1, self.max_energy)
 
         if self.energy > 20:
-            if not self.surrounded or random.random() < 0.05:
+            if not self.surrounded or random.random() < 0.02:
                 self.breed()
 
     def breed(self):
 
         neighbor_space = choose_empty_neighbor(self.location)
         if neighbor_space:
+            self.surrounded = False
+            self.energy = self.energy - self.breed_energy
+            g.creatures[neighbor_space] = bud(self, loc=neighbor_space)
 
             # try to breed sexually - look for a mate in a neighboring loc
-            mate_space = choose_specific_neighbor(self.location, SimPlant)
-            if mate_space:
-                self.surrounded = False
-                self.energy = self.energy - self.breed_energy
-                g.creatures[neighbor_space] = breed(
-                    self, g.creatures[mate_space], loc=neighbor_space)
+            # mate_space = choose_specific_neighbor(self.location, SimPlant)
         else:
             self.surrounded = True
 
     def draw_subclass(self, cx, cy):
-        newsize = min(
-            options.cellsize, options.cellsize * self.energy / self.max_energy + 1)
+        if options.crosses:
+            return self.draw_cross(cx, cy)
+        return self.draw_box(cx, cy)
+
+    def draw_box(self, cx, cy):
+        newsize = int(min(options.cellsize, options.cellsize * self.energy / self.max_energy + 1))
         if not self.rect or self.size != newsize:
             self.size = newsize
             offset = (options.cellsize - newsize) / 2
             cx = offset + cx
             cy = offset + cy
             rect = g.surface.fill(self.color, (cx, cy,  newsize,  newsize))
+            return rect
+
+    def draw_cross(self, cx, cy):
+        newsize = int(min(options.cellsize/2, (options.cellsize/2) * self.energy / self.max_energy + 1))
+        if not self.rect or self.size != newsize:
+            self.size = newsize
+            offset = (options.cellsize - newsize) / 2
+            widebox = (cx,cy + offset, options.cellsize, 2*self.size)
+            # cx = offset + cx
+            # cy = offset + cy
+            rect = g.surface.fill(self.color, widebox)
             return rect
