@@ -6,6 +6,7 @@ from utils import Point, compare_color
 from genome import MutationRate
 from simutils import cell_to_canvas, choose_neighbor, choose_empty_neighbor, find_or_make_empty_space, kill, hsl_to_pycolor, rect_from_location, chance_to_eat
 from globals import g
+import math
 
 class SimCreature(Creature):
 
@@ -199,7 +200,6 @@ class SimPlant(VolitileCreature):
                 self.breed()
 
     def breed(self):
-
         neighbor_space = choose_empty_neighbor(self.location)
         if neighbor_space:
             self.surrounded = False
@@ -227,12 +227,13 @@ class SimPlant(VolitileCreature):
             return rect
 
     def draw_cross(self, cx, cy):
-        newsize = int(min(options.cellsize/2, (options.cellsize/2) * self.energy / self.max_energy + 1))
+
+        newsize = math.ceil(min(options.cellsize/2, (options.cellsize/2) *  self.energy / self.max_energy + 1) )
         if not self.rect or self.size != newsize:
             self.size = newsize
-            offset = (options.cellsize - newsize) / 2
+            offset = (options.cellsize/2 - newsize)
             widebox = (cx,cy + offset, options.cellsize, 2*self.size)
-            # cx = offset + cx
-            # cy = offset + cy
+            tallbox = (cx + offset, cy, 2 * self.size, options.cellsize)
             rect = g.surface.fill(self.color, widebox)
+            rect = g.surface.fill(self.color, tallbox)
             return rect

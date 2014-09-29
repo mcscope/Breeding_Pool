@@ -36,6 +36,9 @@ parser.add_argument('--height', type=float, default = 500.0,
 parser.add_argument('--fullscreen', type=bool, default = False,
                    help='display fullscreen')
 
+parser.add_argument('--crosses', type=bool, default = False,
+                   help='plants display as crosses')
+
 
 
 parser.add_argument('--show_genes', type=bool, default = False,

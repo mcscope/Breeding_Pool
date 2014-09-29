@@ -20,7 +20,8 @@ class SimpleSim():
             flags = flags | pygame.FULLSCREEN
         g.surface = pygame.display.set_mode((g.width, g.height), flags)
         g.surface.set_alpha(None)
-
+        g.draw = True
+        g.drawstep = 1
         self.reset()
         self.start()
 
@@ -41,6 +42,11 @@ class SimpleSim():
             u'q': self.end,
             u'r': self.reset,
             u'w': self.plantWall,
+            u'd': self.toggleDraw,
+            u'-': partial(self.change_step,-3) ,
+            u'=': partial(self.change_step,3),
+
+
         }
         self.run()
 
@@ -80,6 +86,12 @@ class SimpleSim():
         pos = pygame.mouse.get_pos()
         self.placeAt(pos, SimWall)
 
+    def toggleDraw(self):
+        g.draw = not g.draw
+
+    def change_step(self, delta):
+        g.drawstep = max(1, g.drawstep + delta)
+
     def placeAt(self, position,spawn_class):
         click_loc = canvas_to_cell(*(position))
         kill(click_loc)
@@ -97,7 +109,10 @@ class SimpleSim():
             self.key_bindings[event.unicode]()
 
     def paint(self):
-        #
+        if not g.draw:
+            return
+        if g.time % g.drawstep != 0:
+            return
         for creature in g.creatures.values():
             creature.draw()
         pygame.display.update(g.changed_rects)
